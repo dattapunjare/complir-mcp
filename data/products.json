@@ -1,0 +1,78 @@
+[
+  {
+    "id": "P001",
+    "name": "HairGrow Herbal Shampoo",
+    "category": "cosmetic",
+    "target_markets": ["eu", "india"],
+    "claims": ["clinically proven to stop hair loss"],
+    "has_test_report": false,
+    "certifications": [],
+    "has_small_parts": false,
+    "label": {
+      "net_quantity": "250 ml",
+      "batch_number": "SH-2026-01",
+      "importer_address": "",
+      "ingredients_listed": true,
+      "mrp": "",
+      "languages": ["en"],
+      "warnings": []
+    }
+  },
+  {
+    "id": "P002",
+    "name": "Lavender Calm Candle",
+    "category": "candle",
+    "target_markets": ["eu", "india", "us"],
+    "claims": [],
+    "has_test_report": false,
+    "certifications": [],
+    "has_small_parts": false,
+    "label": {
+      "net_quantity": "200 g",
+      "batch_number": "CN-2026-07",
+      "importer_address": "Calm Home Imports, 12 Market Street, Mumbai",
+      "ingredients_listed": true,
+      "mrp": "INR 499",
+      "languages": ["en"],
+      "warnings": ["Never leave a burning candle unattended. Keep away from children and pets."]
+    }
+  },
+    {
+    "id": "P003",
+    "name": "FastCharge 20W USB Charger",
+    "category": "electrical",
+    "target_markets": ["eu", "india"],
+    "claims": [],
+    "has_test_report": true,
+    "certifications": ["CE"],
+    "has_small_parts": false,
+    "label": {
+      "net_quantity": "1 unit",
+      "batch_number": "CH-2026-03",
+      "importer_address": "VoltBridge Trading, 8 Ring Road, Pune",
+      "ingredients_listed": false,
+      "mrp": "INR 899",
+      "languages": ["en"],
+      "warnings": []
+    }
+  },
+  {
+    "id": "P004",
+    "name": "BuildBlocks Starter Set",
+    "category": "toy",
+    "target_markets": ["eu", "us"],
+    "claims": [],
+    "has_test_report": true,
+    "certifications": ["CE"],
+    "has_small_parts": true,
+    "label": {
+      "net_quantity": "120 pieces",
+      "batch_number": "TY-2026-05",
+      "importer_address": "PlayNest Distribution, 3 Garden Lane, Berlin",
+      "ingredients_listed": false,
+      "mrp": "",
+      "languages": ["en"],
+      "warnings": []
+    }
+  }
+]

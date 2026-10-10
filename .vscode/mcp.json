@@ -1,0 +1,9 @@
+{
+  "servers": {
+    "complir": {
+      "type": "stdio",
+      "command": "C:\\Users\\asus\\.local\\bin\\uv.exe",
+      "args": ["--directory", "C:\\Complir mcp", "run", "server.py"]
+    }
+  }
+}
