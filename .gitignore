@@ -1,4 +1,4 @@
-# Python-generated files
+uv run python scripts/measure_tokens.py# Python-generated files
 __pycache__/
 *.py[oc]
 build/

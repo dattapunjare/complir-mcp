@@ -2,70 +2,133 @@
 
 An MCP server that helps a retailer's compliance team check whether a physical product can be sold in a given market. It searches rule documents, checks a product against a market's rules, and returns a cited, draft list of gaps for a human to review.
 
-## 1. Company
-Complir builds AI-powered compliance software for physical products. It helps retailers and brands launch and sell products across countries without manually checking every label, document and regulation. Its users are compliance, quality and sourcing teams at companies that sell across borders, and the pitch is often described as "Vanta for physical products".
+> **All rules and products in this repo are mock data written for a project. They are not real law and must not be used for real compliance decisions.**
 
-## 2. Problem
-Before a product launches in a new country, someone has to answer one question: "Can we sell this product in this market, and what is missing?" Today that means searching long regulation documents and comparing them by hand with the product's label, claims and certificates. It is slow, and a missed rule can mean a blocked shipment or a recall.
+
+## 1. The problem this server solves
+
+Before a product launches in a new country, someone has to answer one question: **"Can we sell this product in this market, and what is missing?"** Today that means searching long regulation documents and comparing them by hand with the product's label, claims and certificates. It is slow, and a missed rule can mean a blocked shipment or a recall.
 
 This server gives an AI assistant a safe way to answer that question:
+- it finds only the relevant rule sections instead of loading whole documents,
+- it checks a product's data against a market's rules,
+- it lists each gap together with the rule ID it breaks, so every finding can be verified,
+- it marks the result as a **draft**, so a compliance officer still makes the decision.
 
-it finds only the relevant rule sections instead of loading whole documents,
-it checks a product's data against a market's rules,
-it lists each gap together with the rule ID it breaks, so every finding can be verified,
-it marks the result as a draft, so a compliance officer still makes the decision.
+**Who it is for:** the compliance team of a retailer that uses Complir. Complir's own team could also use it for demos and support.
 
-Who it is for: the compliance team of a retailer that uses Complir (a customer of the company). Complir's own team could also use it for demos and support.
+### 2.1 The gap i identified
+
+There are three gaps between what a compliance team has and what it needs:
+
+1. **AI vs company knowledge.** A general AI assistant (Claude, Copilot) knows nothing about a company's own rule documents or product data. Without a connection it can only guess from general training, which is risky in compliance.
+2. **Long documents vs a narrow question.** Rules live in long documents, but the question is small ("What label fields does the EU require?"). Loading whole documents into the AI wastes tokens and buries the answer.
+3. **Product data vs rules.** A product's label, claims and certificates sit in one place and the rules in another. Someone has to compare them by hand and find what is missing.
+
+### 2.2 How our MCP server helps
+
+| Gap | What the server does | Result |
+|---|---|---|
+| AI vs company knowledge | MCP connects the AI to the rule files and product data through tools, so it reads the real text instead of guessing | Answers quote the actual rule, e.g. EU-LAB-1 |
+| Long documents vs a narrow question | `search_regulations` returns only the top 3 matching rule sections (RAG) | About 175 tokens instead of 1683, roughly 89-90% less |
+| Product data vs rules | `check_product_against_market` and `compliance_gap_report` compare the two and list each gap with the rule it breaks | A cited to-do list instead of a manual comparison |
+
+The server never approves anything. Reports are marked DRAFT / NOT APPROVED, so a compliance officer still reviews and signs off.
 
 ## 3. Tools, resources and prompts
 
 | Type | Name | What it does | Why it is this type |
 |---|---|---|---|
-| Tool | `search_regulations(question, market)` | Searches the rule documents and returns only the top 3 relevant rule sections (RAG inside the tool). | The AI decides when it needs a rule, and the answer depends on the question. |
-| Tool | `list_products()` | Lists the catalog with id, name, category and target markets. | Lets the AI find a product id from a name. |
+| Tool | `search_regulations(question, market)` | Searches the rule documents and returns only the top 3 relevant rule sections (RAG inside the tool). | The AI decides when it needs a rule, and the result depends on the question. |
+| Tool | `list_products()` | Lists the catalogue with id, name, category and target markets. | Lets the AI find a product id from a product name. |
 | Tool | `check_product_against_market(product_id, market)` | Runs the automated checks and returns gaps with rule IDs. | An action with inputs, so it is a tool. |
-| Tool | `compliance_gap_report(product_id)` | Runs the checks for every target market and returns a report marked DRAFT / NOT APPROVED. | Needs a human sign-off before any decision. |
+| Tool | `compliance_gap_report(product_id)` | Runs the checks for every target market and returns a report marked DRAFT / NOT APPROVED. | Needs a human sign-off before any decision is made. |
 | Resource | `complir://coverage` | Lists the markets and rule documents covered, with rule counts. | Fixed reference information the user can attach to a chat. |
-| Prompt | `pre_launch_review(product_id)` | A 4-step review script: get the report, quote each rule, summarise, state it is a draft. | A reusable instruction the user picks, so weaker models follow the right steps. |
+| Prompt | `pre_launch_review(product_id)` | A 4-step review script: get the report, quote each rule, summarise, state that it is a draft. | A reusable instruction the user picks, so weaker models follow the right steps. |
 
-Tool names are plain verbs and the descriptions say when to use each tool and what each argument means, so a weaker model can choose correctly.
+Tool names are plain verbs, and each description says when to use the tool and what each argument means, so a less capable model can choose correctly.
 
-Checks in `checks.py`: required label fields, prohibited medical claims, unsubstantiated claims (no test report), CE/BIS/UL safety marks, and the toy small-parts warning. These are simple keyword and field checks, which is enough for mock data. A real system would need much better language checking.
+**Checks in `checks.py`:** required label fields, prohibited medical claims, unsubstantiated claims (no test report on file), CE / BIS / UL safety marks, and the small-parts warning for toys. These are simple field and keyword checks, which is enough for mock data. A real system would need much better language understanding.
 
-## 4. How to run
-Requirements: Windows, Python, uv, and an MCP host (Claude Desktop or VS Code with GitHub Copilot).
+## Tech stack
 
-Clone the repo and open the folder in a terminal.
-Install packages: uv sync. The mcp package is pinned to 1.x (mcp[cli]<2), because FastMCP was renamed in version 2.
-
-1. Clone the repo and open the folder in a terminal.
-2. Install packages: `uv sync`. The `mcp` package is pinned to version 1.x (`mcp[cli]<2`), because `FastMCP` was renamed in 2.x.
-3. Start the server directly to check it runs: `uv run python server.py` (stop with Ctrl+C).
-4. Test the search: `uv run python test_search.py`
-5. Measure tokens: `uv run python scripts/measure_tokens.py`
-
-## 5. Host comparison
-
-| | Claude Desktop | VS Code Copilot |
-|---|---|---|
-| Config | `mcpServers` in `claude_desktop_config.json`; restart the app to reload | `servers` in `.vscode/mcp.json`, with a Start link in the file |
-| Tool choice | Picked `search_regulations` on its own from a plain question. For the shampoo question it called `list_products`, then `check_product_against_market`, then `search_regulations`. | With built-in file read and search tools on, an auto-routed smaller model ignored the MCP tool and searched the workspace files instead. It used `search_regulations` only after I disabled those built-in tools. |
-| Permissions | Runs the tools without a prompt in my tests | Asks permission for each call ("Allow in this Session") |
-| Speed | Fast | The first attempt took over a minute (6 steps) |
-| Prompts and resources | Both shown under + → Connectors → "Add from complir" (Pre launch review, Coverage) | TODO: note what you see in VS Code, if anything |
+| Technology | Use in this project |
+|---|---|
+| Python 3.14 | Implements the MCP tools, the rules engine (`checks.py`) and the search code (`rag.py`). |
+| MCP Python SDK (`mcp[cli]` 1.x, `FastMCP`) | Exposes the 4 tools, 1 resource and 1 prompt to MCP hosts over stdio. Pinned to 1.x because `FastMCP` was renamed in 2.x. |
+| `rank_bm25` (BM25) | Ranks rule chunks by keyword match, so `search_regulations` can return only the top 3 relevant rules. |
+| `tiktoken` | Counts tokens in `scripts/measure_tokens.py` for the full dump vs. 3 chunks comparison. |
+| Markdown (`.md`) | Stores the mock rule documents, one file per market and topic. Each `##` section is one chunk. |
+| JSON | Stores the 4 mock products in `data/products.json` (claims, certifications, label fields). |
+| `uv` | Creates the `.venv`, installs packages from `pyproject.toml` and `uv.lock`, and runs the server (`uv run python server.py`). |
+| Claude Desktop and VS Code Copilot | The two MCP hosts used for testing and the host comparison. |
+| Git and GitHub | Version control and the repo that is submitted. |
 
 
-## 6. Workflow
-- **Trigger:** a retailer wants to launch a product in a new market.
-- **Before:** product data entry. The product's claims, label fields and certifications are recorded (here in `data/products.json`).
-- **During:** the server finds the relevant rules, checks the product, and produces a draft gap report with rule IDs. The `pre_launch_review` prompt runs these steps in order.
-- **After:** a compliance officer reviews every gap and signs off. The report is marked DRAFT / NOT APPROVED, and the server never says a product is approved.
-- **Human in the loop:** the server finds and cites. A person makes the launch decision.
-- **stdio vs HTTP:** I used **stdio** for the demo because the host starts the server itself on one machine, so there is no network setup and no open port. A team sharing one server would need **streamable HTTP**, so several people can connect to one deployed server with authentication. I only ran stdio in this project (TODO: add a note here if you test HTTP).
 
-## 7. Token counts: 
+### Why uv and not pip
 
+This project uses **uv** to manage Python packages. uv is a fast package and project manager that replaces `pip` plus `venv`. One command, `uv sync`, creates the virtual environment and installs the exact package versions recorded in `uv.lock`, so the project runs the same way on every machine. `uv run` then starts any script inside that environment without activating anything by hand. I chose uv because it matches the class learning-log server, keeps versions locked (important here, since `mcp` 2.x broke `FastMCP`), and makes the Claude Desktop config simple: the host just runs `uv --directory <project> run server.py`. Plain `pip` would also work, but you would have to create and activate a virtual environment and keep a `requirements.txt` in sync yourself.
 
-## 8. Screenshots
+**Project structure:**
 
+```
+complir-mcp/
+├── server.py              MCP server: 4 tools, 1 resource, 1 prompt
+├── rag.py                 splits rule files into chunks, BM25 search (top 3)
+├── checks.py              rules engine: label fields, claims, safety marks, small parts
+├── test_search.py         quick test of the search for each market
+├── data/
+│   ├── products.json      4 mock products (P001 to P004)
+│   └── regulations/       mock rules, one file per market and topic
+│       ├── eu_labelling.md
+│       ├── eu_safety.md
+│       ├── india_labelling.md
+│       ├── india_safety.md
+│       ├── us_labelling.md
+│       └── us_safety.md
+├── scripts/
+│   └── measure_tokens.py  token counts: full dump vs. 3 chunks
+├── screenshots/           evidence for the host comparison
+├── .vscode/mcp.json       VS Code Copilot server config
+├── pyproject.toml         project and package list
+├── uv.lock                exact package versions
+└── README.md
+```
 
+### System design
+
+```mermaid
+flowchart TD
+    U["Compliance officer<br/>asks a question"] --> H["MCP host<br/>Claude Desktop / VS Code Copilot"]
+    H -->|"stdio (host starts the server)"| S["server.py<br/>FastMCP: 4 tools, 1 resource, 1 prompt"]
+
+    S --> T1["search_regulations"]
+    S --> T2["list_products"]
+    S --> T3["check_product_against_market"]
+    S --> T4["compliance_gap_report"]
+    S --> R["resource: complir://coverage"]
+    S --> P["prompt: pre_launch_review"]
+
+    T1 --> RAG["rag.py<br/>split at ## headings, BM25, top 3 chunks"]
+    RAG --> D1[("data/regulations/*.md<br/>6 files, 32 rule chunks")]
+
+    T2 --> CH["checks.py<br/>rules engine"]
+    T3 --> CH
+    T4 --> CH
+    CH --> D2[("data/products.json<br/>4 mock products")]
+
+    CH -->|"gaps with rule IDs"| S
+    S -->|"DRAFT report"| H
+    H --> O["Answer with cited rule IDs"]
+    O --> HUM["Compliance officer reviews<br/>and signs off"]
+```
+
+**How to read it:**
+1. The user asks a question in a host. The host starts `server.py` over stdio and picks a tool.
+2. Rule questions go through `rag.py`, which searches the rule files and returns only the top 3 chunks.
+3. Product checks go through `checks.py`, which reads `products.json` and returns gaps, each with a rule ID.
+4. The host writes the answer from those results, and the report is marked DRAFT. A human makes the final decision.
+
+## License
+MIT License. See the `LICENSE` file. All rules and products in this repo are mock data for a student project and are not real law.
