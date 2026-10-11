@@ -25,7 +25,7 @@ There are three gaps between what a compliance team has and what it needs:
 2. **Long documents vs a narrow question.** Rules live in long documents, but the question is small ("What label fields does the EU require?"). Loading whole documents into the AI wastes tokens and buries the answer.
 3. **Product data vs rules.** A product's label, claims and certificates sit in one place and the rules in another. Someone has to compare them by hand and find what is missing.
 
-### 2.2 How our MCP server helps
+### 2.2 How MCP server helps
 
 | Gap | What the server does | Result |
 |---|---|---|
