@@ -95,40 +95,19 @@ complir-mcp/
 ├── uv.lock                exact package versions
 └── README.md
 ```
-
 ### System design
 
 ```mermaid
-flowchart TD
-    U["Compliance officer<br/>asks a question"] --> H["MCP host<br/>Claude Desktop / VS Code Copilot"]
-    H -->|"stdio (host starts the server)"| S["server.py<br/>FastMCP: 4 tools, 1 resource, 1 prompt"]
-
-    S --> T1["search_regulations"]
-    S --> T2["list_products"]
-    S --> T3["check_product_against_market"]
-    S --> T4["compliance_gap_report"]
-    S --> R["resource: complir://coverage"]
-    S --> P["prompt: pre_launch_review"]
-
-    T1 --> RAG["rag.py<br/>split at ## headings, BM25, top 3 chunks"]
-    RAG --> D1[("data/regulations/*.md<br/>6 files, 32 rule chunks")]
-
-    T2 --> CH["checks.py<br/>rules engine"]
-    T3 --> CH
-    T4 --> CH
-    CH --> D2[("data/products.json<br/>4 mock products")]
-
-    CH -->|"gaps with rule IDs"| S
-    S -->|"DRAFT report"| H
-    H --> O["Answer with cited rule IDs"]
-    O --> HUM["Compliance officer reviews<br/>and signs off"]
+flowchart LR
+    A["User<br/>(compliance officer)"] --> B["AI host<br/>Claude Desktop / VS Code"]
+    B -->|"stdio"| C["MCP server<br/>server.py"]
+    C --> D["Search rules<br/>rag.py (top 3 chunks)"]
+    C --> E["Check product<br/>checks.py"]
+    D --> F[("Rule files<br/>data/regulations")]
+    E --> G[("Mock products<br/>products.json")]
+    C --> H["DRAFT report with rule IDs"]
+    H --> I["Human sign-off"]
 ```
-
-**How to read it:**
-1. The user asks a question in a host. The host starts `server.py` over stdio and picks a tool.
-2. Rule questions go through `rag.py`, which searches the rule files and returns only the top 3 chunks.
-3. Product checks go through `checks.py`, which reads `products.json` and returns gaps, each with a rule ID.
-4. The host writes the answer from those results, and the report is marked DRAFT. A human makes the final decision.
 
 ## License
 MIT License. See the `LICENSE` file. All rules and products in this repo are mock data for a student project and are not real law.
