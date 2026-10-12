@@ -50,25 +50,9 @@ Tool names are plain verbs, and each description says when to use the tool and w
 
 **Checks in `checks.py`:** required label fields, prohibited medical claims, unsubstantiated claims (no test report on file), CE / BIS / UL safety marks, and the small-parts warning for toys. These are simple field and keyword checks, which is enough for mock data. A real system would need much better language understanding.
 
-## Tech stack
+### Why uv
 
-| Technology | Use in this project |
-|---|---|
-| Python 3.14 | Implements the MCP tools, the rules engine (`checks.py`) and the search code (`rag.py`). |
-| MCP Python SDK (`mcp[cli]` 1.x, `FastMCP`) | Exposes the 4 tools, 1 resource and 1 prompt to MCP hosts over stdio. Pinned to 1.x because `FastMCP` was renamed in 2.x. |
-| `rank_bm25` (BM25) | Ranks rule chunks by keyword match, so `search_regulations` can return only the top 3 relevant rules. |
-| `tiktoken` | Counts tokens in `scripts/measure_tokens.py` for the full dump vs. 3 chunks comparison. |
-| Markdown (`.md`) | Stores the mock rule documents, one file per market and topic. Each `##` section is one chunk. |
-| JSON | Stores the 4 mock products in `data/products.json` (claims, certifications, label fields). |
-| `uv` | Creates the `.venv`, installs packages from `pyproject.toml` and `uv.lock`, and runs the server (`uv run python server.py`). |
-| Claude Desktop and VS Code Copilot | The two MCP hosts used for testing and the host comparison. |
-| Git and GitHub | Version control and the repo that is submitted. |
-
-
-
-### Why uv and not pip
-
-This project uses **uv** to manage Python packages. uv is a fast package and project manager that replaces `pip` plus `venv`. One command, `uv sync`, creates the virtual environment and installs the exact package versions recorded in `uv.lock`, so the project runs the same way on every machine. `uv run` then starts any script inside that environment without activating anything by hand. I chose uv because it matches the class learning-log server, keeps versions locked (important here, since `mcp` 2.x broke `FastMCP`), and makes the Claude Desktop config simple: the host just runs `uv --directory <project> run server.py`. Plain `pip` would also work, but you would have to create and activate a virtual environment and keep a `requirements.txt` in sync yourself.
+This project uses **uv** to manage Python packages. uv is a fast package and project manager that replaces `pip` plus `venv`. One command, `uv sync`, creates the virtual environment and installs the exact package versions recorded in `uv.lock`, so the project runs the same way on every machine. `uv run` then starts any script inside that environment without activating anything by hand.
 
 **Project structure:**
 
